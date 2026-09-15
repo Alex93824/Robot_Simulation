@@ -1,0 +1,43 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/adept/pioneer3/protos/Pioneer3at.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.022272632073364794 0.001321658475607096 0.9997510605542753 3.023208012173848
+  position 3.971183908112235 -0.638490315220964 0.5000059456060136
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 10 10
+}
+TexturedBackgroundLight {
+}
+Pioneer3at {
+  hidden position_0_0 13.957711546382008
+  hidden position_0_1 12.115124142588304
+  hidden position_0_2 13.957626760312696
+  hidden position_0_3 12.115039351661611
+  hidden rotation_2 0.0892497279394155 -0.0892521834370101 -0.9920022851861113 1.578836747785453
+  hidden rotation_3 0.646487063487712 -0.64648176263535 -0.4051120922941277 2.3717924874515792
+  hidden rotation_4 0.0892914456805021 -0.08929390072145518 -0.9919947767111644 1.5788443167244435
+  hidden rotation_5 0.646497059664889 -0.6464917586005987 -0.4050801870076568 2.3718473024222098
+  translation 1.2933405937589628 0.14742260299716242 -0.002388477528283417
+  rotation 2.325709134992638e-05 0.00012913277816466246 -0.9999999913919166 0.3769310281950419
+  controller "robot_controller"
+  extensionSlot [
+    Camera {
+      translation 0.14444 -0.008153 0.3
+      rotation 0 0 1 7.33682e-06
+      width 1080
+      height 720
+    }
+  ]
+}
