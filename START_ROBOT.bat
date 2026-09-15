@@ -10,65 +10,145 @@ echo  ================================================
 echo.
 
 :: ============================================================
-::  CONFIGURATION  --  Edit these if anything moves
+::  STEP 1 — Dynamic Path & Environment Detection
 :: ============================================================
 
-set "WEBOTS_EXE=C:\Program Files\Webots\msys64\mingw64\bin\webotsw.exe"
-set "WORLD_FILE=c:\Users\joyji\OneDrive\my_project\worlds\Test.wbt"
-
-set "LLAMA_SERVER=C:\Users\joyji\.docker\bin\inference\llama-server.exe"
-set "MODEL_FILE=C:\Users\joyji\models\Qwen3VL-2B-Instruct-Q4_K_M.gguf"
-set "MMPROJ_FILE=C:\Users\joyji\models\mmproj-Qwen3VL-2B-Instruct-F16.gguf"
+set "PROJECT_DIR=%~dp0"
+set "WORLD_FILE=%PROJECT_DIR%worlds\Test.wbt"
+set "AI_BRIDGE_DIR=%PROJECT_DIR%ai_bridge"
 set "VISION_PORT=8090"
 set "VISION_GPU_LAYERS=99"
 
-set "AI_BRIDGE_DIR=c:\Users\joyji\OneDrive\my_project\ai_bridge"
+set "MODEL_NAME=Qwen3VL-2B-Instruct-Q4_K_M.gguf"
+set "MMPROJ_NAME=mmproj-Qwen3VL-2B-Instruct-F16.gguf"
 
-:: ============================================================
-::  STEP 1 — Validate all required files before doing anything
-:: ============================================================
+echo [check] Verifying files and environment...
 
-echo [check] Verifying files...
+:: 1. Detect Webots
+set "WEBOTS_EXE="
+if exist "%ProgramFiles%\Webots\msys64\mingw64\bin\webotsw.exe" (
+    set "WEBOTS_EXE=%ProgramFiles%\Webots\msys64\mingw64\bin\webotsw.exe"
+) else if exist "%SystemDrive%\Program Files\Webots\msys64\mingw64\bin\webotsw.exe" (
+    set "WEBOTS_EXE=%SystemDrive%\Program Files\Webots\msys64\mingw64\bin\webotsw.exe"
+) else if exist "%LOCALAPPDATA%\Programs\Webots\msys64\mingw64\bin\webotsw.exe" (
+    set "WEBOTS_EXE=%LOCALAPPDATA%\Programs\Webots\msys64\mingw64\bin\webotsw.exe"
+) else (
+    for /f "delims=" %%i in ('where.exe webotsw.exe 2^>nul') do set "WEBOTS_EXE=%%i"
+    if not defined WEBOTS_EXE (
+        for /f "delims=" %%i in ('where.exe webots.exe 2^>nul') do set "WEBOTS_EXE=%%i"
+    )
+)
 
-if not exist "%WEBOTS_EXE%"   goto err_webots
-if not exist "%WORLD_FILE%"   goto err_world
-if not exist "%LLAMA_SERVER%" goto err_llama
-if not exist "%MODEL_FILE%"   goto err_model
-if not exist "%MMPROJ_FILE%"  goto err_mmproj
-if not exist "%AI_BRIDGE_DIR%\orchestrator.py" goto err_orchestrator
+if defined WEBOTS_EXE goto webots_ok
+echo [ERROR] Webots was not found.
+echo Please install Webots or add it to PATH.
+echo Expected standard location:
+echo   %ProgramFiles%\Webots\msys64\mingw64\bin\webotsw.exe
+goto bail
 
-echo [check] All files found. OK.
+:webots_ok
+
+:: 2. Detect World File
+if exist "%WORLD_FILE%" goto world_ok
+echo [ERROR] World file not found: %WORLD_FILE%
+goto bail
+
+:world_ok
+
+:: 3. Detect llama-server.exe
+set "LLAMA_SERVER="
+if exist "%PROJECT_DIR%bin\llama-server.exe" (
+    set "LLAMA_SERVER=%PROJECT_DIR%bin\llama-server.exe"
+) else if exist "%PROJECT_DIR%tools\llama-server.exe" (
+    set "LLAMA_SERVER=%PROJECT_DIR%tools\llama-server.exe"
+) else if exist "%USERPROFILE%\.docker\bin\inference\llama-server.exe" (
+    set "LLAMA_SERVER=%USERPROFILE%\.docker\bin\inference\llama-server.exe"
+) else (
+    for /f "delims=" %%i in ('where.exe llama-server.exe 2^>nul') do set "LLAMA_SERVER=%%i"
+)
+
+if defined LLAMA_SERVER goto llama_ok
+echo [ERROR] llama-server.exe was not found.
 echo.
-goto step2
-
-:err_webots
-echo [ERROR] Webots not found:      %WEBOTS_EXE%
-echo         Edit WEBOTS_EXE in this script.
+echo Expected one of:
+echo   %PROJECT_DIR%bin\llama-server.exe
+echo   %PROJECT_DIR%tools\llama-server.exe
+echo   %USERPROFILE%\.docker\bin\inference\llama-server.exe
+echo   Or available in Windows PATH
+echo.
+echo Please install llama.cpp (llama-server.exe) and place it in one of these locations.
 goto bail
 
-:err_world
-echo [ERROR] World file not found:  %WORLD_FILE%
-echo         Edit WORLD_FILE in this script.
+:llama_ok
+
+:: 4. Detect Model file
+set "MODEL_FILE="
+if exist "%PROJECT_DIR%models\%MODEL_NAME%" (
+    set "MODEL_FILE=%PROJECT_DIR%models\%MODEL_NAME%"
+) else if exist "%USERPROFILE%\models\%MODEL_NAME%" (
+    set "MODEL_FILE=%USERPROFILE%\models\%MODEL_NAME%"
+)
+
+if defined MODEL_FILE goto model_ok
+echo [ERROR] Model file not found: %MODEL_NAME%
+echo.
+echo Expected one of:
+echo   %PROJECT_DIR%models\%MODEL_NAME%
+echo   %USERPROFILE%\models\%MODEL_NAME%
+echo.
+echo Please download the required model and place it in one of these locations.
 goto bail
 
-:err_llama
-echo [ERROR] llama-server not found: %LLAMA_SERVER%
-echo         Edit LLAMA_SERVER in this script.
+:model_ok
+
+:: 5. Detect Multi-modal projector file
+set "MMPROJ_FILE="
+if exist "%PROJECT_DIR%models\%MMPROJ_NAME%" (
+    set "MMPROJ_FILE=%PROJECT_DIR%models\%MMPROJ_NAME%"
+) else if exist "%USERPROFILE%\models\%MMPROJ_NAME%" (
+    set "MMPROJ_FILE=%USERPROFILE%\models\%MMPROJ_NAME%"
+)
+
+if defined MMPROJ_FILE goto mmproj_ok
+echo [ERROR] Multi-modal projector file not found: %MMPROJ_NAME%
+echo.
+echo Expected one of:
+echo   %PROJECT_DIR%models\%MMPROJ_NAME%
+echo   %USERPROFILE%\models\%MMPROJ_NAME%
+echo.
+echo Please download the required projector and place it in one of these locations.
 goto bail
 
-:err_model
-echo [ERROR] Model not found:       %MODEL_FILE%
-echo         Edit MODEL_FILE in this script.
-goto bail
+:mmproj_ok
 
-:err_mmproj
-echo [ERROR] mmproj not found:      %MMPROJ_FILE%
-echo         Edit MMPROJ_FILE in this script.
-goto bail
-
-:err_orchestrator
+:: 6. Check Orchestrator script
+if exist "%AI_BRIDGE_DIR%\orchestrator.py" goto orchestrator_ok
 echo [ERROR] orchestrator.py not found in: %AI_BRIDGE_DIR%
 goto bail
+
+:orchestrator_ok
+
+:: 7. Check Environment (.env) file
+if exist "%AI_BRIDGE_DIR%\.env" goto env_ok
+echo [ERROR] Environment file not found: %AI_BRIDGE_DIR%\.env
+echo.
+echo Please create it from the example template:
+echo   copy "%AI_BRIDGE_DIR%\.env.example" "%AI_BRIDGE_DIR%\.env"
+echo.
+echo Then edit "%AI_BRIDGE_DIR%\.env" and set your NVIDIA_API_KEY.
+goto bail
+
+:env_ok
+
+:: 8. Detect Python runtime (prefer local .venv if present)
+set "PYTHON_CMD=python"
+if exist "%PROJECT_DIR%.venv\Scripts\python.exe" (
+    set "PYTHON_CMD=%PROJECT_DIR%.venv\Scripts\python.exe"
+)
+
+echo [check] All required files and dependencies detected. OK.
+echo.
+goto step2
 
 :bail
 echo.
@@ -90,7 +170,7 @@ timeout /t 1 /nobreak >nul
 
 echo [1/3] Starting Qwen3-VL vision server on port %VISION_PORT%...
 
-start "Qwen3-VL Vision Server" "%~dp0start_vision.bat"
+start "Qwen3-VL Vision Server" "%PROJECT_DIR%start_vision.bat"
 
 :: Give the process a moment to spawn before we start polling
 timeout /t 3 /nobreak >nul
@@ -176,7 +256,7 @@ echo.
 :: When the user presses Ctrl+C the agent stops cleanly,
 :: then we loop back and ask for the next mission.
 cd /d "%AI_BRIDGE_DIR%"
-python orchestrator.py "%MISSION%"
+"%PYTHON_CMD%" orchestrator.py "%MISSION%"
 
 echo.
 echo [mission] Agent stopped.

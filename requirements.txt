@@ -1,0 +1,7 @@
+# Python dependencies for Webots Autonomous Robot Simulation
+# AI Bridge (orchestrator.py, vision_client.py) and Webots Controller (robot_controller.py)
+
+openai>=1.0.0
+python-dotenv>=1.0.0
+requests>=2.28.0
+pillow>=10.0.0
